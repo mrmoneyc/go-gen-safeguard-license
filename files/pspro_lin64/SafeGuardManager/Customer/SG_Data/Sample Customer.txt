@@ -1,0 +1,43 @@
+
+
+Customer Report generated on: Tue Mar 08 19:16:29 CST 2011
+__________________________________________________________
+
+
+Company Information
+___________________
+
+Name:         Sample Company
+Address:      123 Main St
+Address 2:    Anytown
+City:         Anycity
+State:        AZ
+Zipcode:      
+Country:      United States
+Phone:        1-800-555-1212
+Cell:         333-555-1212
+Fax:          no fax
+Email:        johndoe@example.com
+Web:          www.persistentsecurity.com
+
+
+Contact Information
+___________________
+
+First Name:   John
+Last Name:    Doe
+Title:        sales
+Department:   Corporate
+Phone:        800-555-1212
+Extension:    
+Cell:         333-555-1212
+Email:        johndoe@example.com
+Email 2:      
+
+
+License Information
+___________________
+
+NAME=presentation VERS=4.0 ID=001f5bf5b09f IDTYPE=ethernet EXPIRES=17-aug-2011 CERT=7974b282816baca113c34f19d5b2ff49467476e835a616ad26fab768f3ec82db
+NAME=paint VERS=4.0 ID=001f5bf5b09f IDTYPE=ethernet EXPIRES=17-aug-2011 CERT=a4d020434dbc2ed27672ddcf91e457552d8625ed2ea2914c285d070f96d718e0
+
