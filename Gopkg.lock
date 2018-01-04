@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/coreos/bbolt"
+  packages = ["."]
+  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
+  version = "v1.3.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
@@ -70,6 +76,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b58ddc7b4af56c7ac7a3465720da5666f29b89e03e3564ab0013e6d3e8eefe89"
+  inputs-digest = "2a0c45a71e5dd4f4a7ef7bdca66c361dbc32bb6ba12189ea8bf20bcae84117d5"
   solver-name = "gps-cdcl"
   solver-version = 1

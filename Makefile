@@ -9,7 +9,7 @@ BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 
 # Symlink into GOPATH
 GITHUB_USERNAME=mrmoneyc
-BUILD_DIR=${GOPATH}/src/github.com/${GITHUB_USERNAME}/${BINARY}/src
+BUILD_DIR=${GOPATH}/src/github.com/${GITHUB_USERNAME}/${BINARY}
 CURRENT_DIR=$(shell pwd)
 BUILD_DIR_LINK=$(shell readlink ${BUILD_DIR})
 
