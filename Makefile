@@ -31,7 +31,7 @@ link:
 
 linux:
 	cd ${BUILD_DIR}; \
-		GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . ; \
+		GOOS=linux GOARCH=${GOARCH} ENABLE_CGO=0 go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . ; \
 		cd - >/dev/null
 
 darwin:
