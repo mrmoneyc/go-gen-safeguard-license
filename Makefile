@@ -16,6 +16,10 @@ BUILD_DIR_LINK=$(shell readlink ${BUILD_DIR})
 # Setup the -ldflags option for go build here, interpolate the variable values
 LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
 
+# Deploy target
+DEPLOY_SRV_IP = 192.168.78.242
+DEPLOY_SRV_USER = jeremy.chang
+
 # Build the project
 all: link clean test vet linux darwin windows
 
@@ -65,4 +69,8 @@ clean:
 	-rm -f ${VET_REPORT}
 	-rm -f ${BINARY}-*
 
-.PHONY: link linux darwin windows test vet fmt clean
+deploy:
+	rsync -av -e 'ssh' go-gen-safeguard-license-linux-amd64 ${DEPLOY_SRV_USER}@${DEPLOY_SRV_IP}:~/go-gen-safeguard-license-linux-amd64
+	rsync -av -e 'ssh' public ${DEPLOY_SRV_USER}@${DEPLOY_SRV_IP}:~/
+
+.PHONY: link linux darwin windows test vet fmt clean deploy

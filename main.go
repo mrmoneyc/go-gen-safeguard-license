@@ -19,6 +19,7 @@ import (
 
 	bolt "github.com/coreos/bbolt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/jtblin/go-ldap-client"
 )
 
@@ -48,12 +49,11 @@ type GenLog struct {
 
 func main() {
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
 
+	r.Static("/public", "./public")
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/public")
+	})
 	r.POST("/genlicense", genLicense)
 	r.GET("/dl/:uid", dlLicense)
 	r.GET("/log", getGenLog)
@@ -64,7 +64,7 @@ func main() {
 func genLicense(c *gin.Context) {
 	var jsonReqForm ReqForm
 
-	c.Bind(&jsonReqForm)
+	c.ShouldBindWith(&jsonReqForm, binding.JSON)
 
 	ldapClient := &ldap.LDAPClient{
 		Base:        "dc=viscovery,dc=com",
@@ -89,18 +89,16 @@ func genLicense(c *gin.Context) {
 	ok, user, err := ldapClient.Authenticate(username, passwd)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error authenticating user %s: %+v", username, err)
-		c.JSON(http.StatusForbidden, gin.H{
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": errMsg,
 		})
-
 		return
 	}
 	if !ok {
 		errMsg := fmt.Sprintf("Authenticating failed for user %s", username)
-		c.JSON(http.StatusForbidden, gin.H{
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": errMsg,
 		})
-
 		return
 	}
 
@@ -108,11 +106,10 @@ func genLicense(c *gin.Context) {
 	dt, err := exec.Command(dtCmd, strconv.Itoa(duedate)).Output()
 	if err != nil {
 		errMsg := fmt.Sprintf("%s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"command": dtCmd,
 			"error":   errMsg,
 		})
-
 		return
 	}
 	dtStr := strings.TrimSuffix(string(dt), "\n")
@@ -121,12 +118,11 @@ func genLicense(c *gin.Context) {
 	lic, err := exec.Command(licCmd, "sha256", "monitor", "5.0", "dev", "any", dtStr).Output()
 	if err != nil {
 		errMsg := fmt.Sprintf("%s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"command": licCmd,
 			"dt":      dtStr,
 			"error":   errMsg,
 		})
-
 		return
 	}
 
@@ -134,10 +130,9 @@ func genLicense(c *gin.Context) {
 	f, err := os.Create(filepath.Join(licensePath, user["uidNumber"], "monitor.lic"))
 	if err != nil {
 		result := fmt.Sprintf("User: %+v, License: %s", user, lic)
-		c.JSON(http.StatusOK, gin.H{
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{
 			"result": result,
 		})
-
 		return
 	}
 	defer f.Close()
@@ -147,20 +142,18 @@ func genLicense(c *gin.Context) {
 	err = w.Flush()
 	if err != nil {
 		result := fmt.Sprintf("User: %+v, License: %s", user, lic)
-		c.JSON(http.StatusOK, gin.H{
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{
 			"result": result,
 		})
-
 		return
 	}
 
 	tarFile, err := os.Create(filepath.Join(licensePath, user["uidNumber"]+".tar.gz"))
 	if err != nil {
 		result := fmt.Sprintf("User: %+v, License: %s", user, lic)
-		c.JSON(http.StatusOK, gin.H{
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{
 			"result": result,
 		})
-
 		return
 	}
 	defer tarFile.Close()
@@ -172,14 +165,14 @@ func genLicense(c *gin.Context) {
 
 	files := []string{
 		filepath.Join(exampleFilePath, "Nodelocked.py"),
-		filepath.Join(exampleFilePath, "PSProlibProxy.pyc"),
+		filepath.Join(exampleFilePath, "PSProlibProxy.py"),
 		filepath.Join(exampleFilePath, "_PSProlibProxy.so"),
 		filepath.Join(licensePath, user["uidNumber"], "monitor.lic"),
 	}
 
 	for i := range files {
 		if err := addFile(tw, files[i]); err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 	}
 
@@ -309,7 +302,7 @@ func getGenLog(c *gin.Context) {
 
 func checkErr(err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 }
 

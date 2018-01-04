@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Gen License</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+
+    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <form class="form-signin">
+        <h2 class="form-signin-heading">SafeGuard License Generator</h2>
+        <label for="inputAccount" class="sr-only">LDAP Account</label>
+        <input type="text" id="inputAccount" class="form-control" placeholder="LDAP Account" required autofocus>
+
+        <label for="inputPassword" class="sr-only">LDAP Password</label>
+        <input type="password" id="inputPassword" class="form-control" placeholder="LDAP Password" required>
+
+        <label for="inputExpireDay" class="sr-only">License Expire Day</label>
+        <input type="text" id="inputExpireDay" class="form-control" placeholder="License Expire Day">
+
+        <button class="btn btn-lg btn-primary btn-block" type="button" id="btnGen">Gen!</button>
+
+        <span id="result"></span>
+
+      </form>
+    </div> <!-- /container -->
+  </body>
+</html>
