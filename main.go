@@ -3,11 +3,14 @@ package main
 import (
 	"archive/tar"
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"encoding/binary"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -21,6 +24,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/jtblin/go-ldap-client"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -47,6 +51,43 @@ type GenLog struct {
 	CreatedTime int64  `json:"created_time"`
 }
 
+// CfgYaml - Yaml config struct
+type CfgYaml struct {
+	LDAP       SectionLDAP  `yaml:"ldap"`
+	Permission SectionPerms `yaml:"permission"`
+}
+
+// SectionLDAP - Config LDAP section
+type SectionLDAP struct {
+	Server string `yaml:"server"`
+	BaseDN string `yaml:"basedn"`
+	BindDN string `yaml:"binddn"`
+}
+
+// SectionPerms - Config permission section
+type SectionPerms struct {
+	AllowUsers []string `yaml:"allowusers"`
+}
+
+var (
+	cfgFile    string
+	defaultCfg = []byte(`
+ldap:
+  server: "192.168.7.252"
+  basedn: "dc=viscovery,dc=com"
+  binddn: "uid=ldapadmin,cn=users,dc=viscovery,dc=com"
+permission:
+  allowusers:
+    - jeremy.chang
+    - authur.wei
+`)
+)
+
+func init() {
+	flag.StringVar(&cfgFile, "c", "", "Configuration file path.")
+	flag.StringVar(&cfgFile, "config", "", "Configuration file path.")
+}
+
 func main() {
 	r := gin.Default()
 
@@ -61,17 +102,54 @@ func main() {
 	r.Run()
 }
 
+func loadConfig(cfgPath string) (CfgYaml, error) {
+	var cfg CfgYaml
+
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
+
+	if cfgPath != "" {
+		buf, err := ioutil.ReadFile(cfgPath)
+		if err != nil {
+			return cfg, err
+		}
+
+		viper.ReadConfig(bytes.NewBuffer(buf))
+	} else {
+		if err := viper.ReadInConfig(); err == nil {
+			log.Println("Using config file: ", viper.ConfigFileUsed())
+		} else {
+			viper.ReadConfig(bytes.NewBuffer(defaultCfg))
+		}
+	}
+
+	cfg.LDAP.Server = viper.GetString("ldap.server")
+	cfg.LDAP.BaseDN = viper.GetString("ldap.basedn")
+	cfg.LDAP.BindDN = viper.GetString("ldap.binddn")
+	cfg.Permission.AllowUsers = viper.GetStringSlice("permission.allowusers")
+
+	return cfg, nil
+}
+
 func genLicense(c *gin.Context) {
+	cfg, err := loadConfig(cfgFile)
+	checkErr(err)
+
+	log.Printf("LDAP Server: %s\n", cfg.LDAP.Server)
+	log.Printf("LDAP BaseDN: %s\n", cfg.LDAP.BaseDN)
+	log.Printf("LDAP BindDN: %s\n", cfg.LDAP.BindDN)
+
 	var jsonReqForm ReqForm
 
 	c.ShouldBindWith(&jsonReqForm, binding.JSON)
 
 	ldapClient := &ldap.LDAPClient{
-		Base:        "dc=viscovery,dc=com",
-		Host:        "192.168.7.252",
+		Base:        cfg.LDAP.BaseDN,
+		Host:        cfg.LDAP.Server,
 		Port:        389,
 		UseSSL:      false,
-		BindDN:      "uid=ldapadmin,cn=users,dc=viscovery,dc=com",
+		BindDN:      cfg.LDAP.BindDN,
 		UserFilter:  "(uid=%s)",
 		GroupFilter: "(memberUid=%s)",
 		Attributes:  []string{"givenName", "sn", "mail", "uid", "uidNumber"},
@@ -102,6 +180,22 @@ func genLicense(c *gin.Context) {
 		return
 	}
 
+	// Permission check
+	foundAllowUser := false
+	for _, v := range cfg.Permission.AllowUsers {
+		if user["sn"] == v {
+			foundAllowUser = true
+		}
+	}
+
+	if !(foundAllowUser) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "You are not allow to perform this action.",
+		})
+		return
+	}
+
+	// Generate license
 	dtCmd := fmt.Sprintf("%s/sggendate", psBinPath)
 	dt, err := exec.Command(dtCmd, strconv.Itoa(duedate)).Output()
 	if err != nil {
