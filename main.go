@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -39,7 +38,7 @@ const (
 type ReqForm struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Passwd   string `form:"passwd" json:"passwd" binding:"required"`
-	DueDate  int    `form:"due" json:"due" binding:"required"`
+	DueDate  string `form:"due" json:"due" binding:"required"`
 }
 
 // GenLog - Struct of log
@@ -160,8 +159,9 @@ func genLicense(c *gin.Context) {
 	passwd := jsonReqForm.Passwd
 
 	duedate := jsonReqForm.DueDate
-	if duedate == 0 {
-		duedate = 7
+	log.Println("DueDate: ", duedate)
+	if duedate == "" {
+		duedate = "7"
 	}
 
 	ok, user, err := ldapClient.Authenticate(username, passwd)
@@ -197,7 +197,7 @@ func genLicense(c *gin.Context) {
 
 	// Generate license
 	dtCmd := fmt.Sprintf("%s/sggendate", psBinPath)
-	dt, err := exec.Command(dtCmd, strconv.Itoa(duedate)).Output()
+	dt, err := exec.Command(dtCmd, duedate).Output()
 	if err != nil {
 		errMsg := fmt.Sprintf("%s", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
